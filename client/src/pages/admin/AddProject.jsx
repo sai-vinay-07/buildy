@@ -1,159 +1,231 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { assets } from "../../assets/assets";
+import Quill from "quill";
+import "quill/dist/quill.snow.css"; // Quill styles
 
 const AddProject = () => {
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    features: "",
-    keyConstraints: "",
-    thumbnail: null,
-    repoLink: "",
-    youtubeLink: "",
-    wireframe: null,
-  });
+  const descriptionRef = useRef(null);
+  const featuresRef = useRef(null);
+  const keyRef = useRef(null);
 
-  const handleChange = (e) => {
-    const { name, value, type, files } = e.target;
-    if (type === "file") {
-      setFormData({ ...formData, [name]: files[0] });
-    } else {
-      setFormData({ ...formData, [name]: value });
+  const descriptionQuill = useRef(null);
+  const featuresQuill = useRef(null);
+  const keyQuill = useRef(null);
+
+  const [image, setImage] = useState(false);
+  const [wireframe, setWireframe] = useState(false); // ✅ for wireframe upload
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [features, setFeatures] = useState("");
+  const [keyConsiderations, setKeyConsiderations] = useState("");
+  const [category, setCategory] = useState("Startup");
+  const [difficulty, setDifficulty] = useState("");
+  const [repoLink, setRepoLink] = useState("");
+  const [videoLink, setVideoLink] = useState("");
+  const [isPublished, setIsPublished] = useState(false);
+
+  const onSubmitHandler = async (e) => {
+    e.preventDefault();
+
+    const projectData = {
+      title,
+      description,
+      features,
+      keyConsiderations,
+      category,
+      difficulty,
+      repoLink,
+      videoLink,
+      isPublished,
+      image,
+      wireframe, // ✅ added wireframe to payload
+    };
+
+    console.log("Submitting Project:", projectData);
+    // TODO: send to backend API
+  };
+
+  const generateContent = async () => {
+    try {
+      const prompt = `
+      Generate the following project details:
+      - Description (2–3 lines)
+      - Features (bullet points)
+      - Key Considerations (bullet points)
+      for a project titled: "${title}" in category "${category}".
+      `;
+
+      const res = await fetch("http://localhost:5000/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+
+      const data = await res.json();
+
+      if (data.description) setDescription(data.description);
+      if (featuresQuill.current) {
+        featuresQuill.current.root.innerHTML = data.features;
+        setFeatures(data.features);
+      }
+      if (keyQuill.current) {
+        keyQuill.current.root.innerHTML = data.keyConsiderations;
+        setKeyConsiderations(data.keyConsiderations);
+      }
+    } catch (err) {
+      console.error("Error generating content:", err);
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(" Project Data:", formData);
-    alert("Project Added Successfully!");
-  };
+  useEffect(() => {
+    if (!descriptionQuill.current && descriptionRef.current) {
+      descriptionQuill.current = new Quill(descriptionRef.current, {
+        theme: "snow",
+        placeholder: "Write a short description...",
+      });
+      descriptionQuill.current.on("text-change", () => {
+        setDescription(descriptionQuill.current.root.innerHTML);
+      });
+    }
+
+    if (!featuresQuill.current && featuresRef.current) {
+      featuresQuill.current = new Quill(featuresRef.current, {
+        theme: "snow",
+        placeholder: "List main features...",
+      });
+      featuresQuill.current.on("text-change", () => {
+        setFeatures(featuresQuill.current.root.innerHTML);
+      });
+    }
+
+    if (!keyQuill.current && keyRef.current) {
+      keyQuill.current = new Quill(keyRef.current, {
+        theme: "snow",
+        placeholder: "Add key considerations...",
+      });
+      keyQuill.current.on("text-change", () => {
+        setKeyConsiderations(keyQuill.current.root.innerHTML);
+      });
+    }
+  }, []);
 
   return (
-    <div className="py-10 flex flex-col px-10 bg-white min-h-screen">
-      <form
-        onSubmit={handleSubmit}
-        className="md:p-10 p-4 space-y-6 max-w-2xl w-full"
-      >
-        {/* Heading */}
-        <div className="flex items-center gap-3 mb-6 text-gray-700">
-          <img src={assets.dashboard_icon_2} alt="Add Project" />
-          <h2 className="text-xl font-semibold">Add New Project</h2>
-        </div>
-
-        {/* Project Title */}
-        <div className="flex flex-col gap-1">
-          <label className="text-base font-medium">Project Title</label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            placeholder="Enter project title"
-            required
-            className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-400/40"
+    <form
+      onSubmit={onSubmitHandler}
+      className="flex-1 bg-blue-50/50 text-gray-600 h-full overflow-scroll"
+    >
+      <div className="bg-white w-full max-w-3xl p-4 md:p-10 sm:m-10 shadow rounded">
+        {/* Thumbnail */}
+        <p>Upload Thumbnail</p>
+        <label htmlFor="image">
+          <img
+            src={!image ? assets.upload_area : URL.createObjectURL(image)}
+            className="mt-2 h-16 rounded cursor-pointer"
+            alt=""
           />
-        </div>
+          <input
+            onChange={(e) => setImage(e.target.files[0])}
+            type="file"
+            id="image"
+            hidden
+            required
+          />
+        </label>
+
+        {/* Wireframe Upload */}
+        <p className="mt-4">Upload Wireframe</p>
+        <label htmlFor="wireframe">
+          <img
+            src={!wireframe ? assets.upload_area : URL.createObjectURL(wireframe)}
+            className="mt-2 h-16 rounded cursor-pointer"
+            alt=""
+          />
+          <input
+            onChange={(e) => setWireframe(e.target.files[0])}
+            type="file"
+            id="wireframe"
+            hidden
+          />
+        </label>
+
+        {/* Title */}
+        <p className="mt-4">Project Title</p>
+        <input
+          onChange={(e) => setTitle(e.target.value)}
+          value={title}
+          type="text"
+          placeholder="Type here"
+          required
+          className="w-full max-w-lg mt-2 p-2 border border-gray-300 outline-none rounded"
+        />
 
         {/* Description */}
-        <div className="flex flex-col gap-1">
-          <label className="text-base font-medium">Project Description</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={4}
-            placeholder="Briefly describe your project"
-            required
-            className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-400/40 resize-none"
-          />
+        <p className="mt-4">Project Description</p>
+        <div className="max-w-lg h-40 pb-16 pt-2 relative">
+          <div ref={descriptionRef}></div>
         </div>
 
         {/* Features */}
-        <div className="flex flex-col gap-1">
-          <label className="text-base font-medium">Features</label>
-          <textarea
-            name="features"
-            value={formData.features}
-            onChange={handleChange}
-            rows={3}
-            placeholder="List project features (comma or line separated)"
-            className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-400/40 resize-none"
-          />
+        <p className="mt-4">Project Features</p>
+        <div className="max-w-lg h-40 pb-16 pt-2 relative">
+          <div ref={featuresRef}></div>
         </div>
 
-        {/* Key Constraints */}
-        <div className="flex flex-col gap-1">
-          <label className="text-base font-medium">Key Constraints</label>
-          <textarea
-            name="keyConstraints"
-            value={formData.keyConstraints}
-            onChange={handleChange}
-            rows={3}
-            placeholder="Enter limitations or constraints"
-            className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-400/40 resize-none"
-          />
+        {/* Key Considerations */}
+        <p className="mt-4">Key Considerations</p>
+        <div className="max-w-lg h-40 pb-16 pt-2 relative">
+          <div ref={keyRef}></div>
         </div>
 
-        {/* Thumbnail Upload */}
-        <div className="flex flex-col gap-1">
-          <label className="text-base font-medium">Thumbnail Image</label>
-          <input
-            type="file"
-            name="thumbnail"
-            accept="image/*"
-            onChange={handleChange}
-            required
-            className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-400/40"
-          />
-        </div>
+        {/* AI Button */}
+        <button
+          className="mt-4 text-sm text-white bg-black/70 px-4 py-2 rounded hover:bg-black"
+          type="button"
+          onClick={generateContent}
+        >
+          Generate with AI
+        </button>
 
         {/* Repo Link */}
-        <div className="flex flex-col gap-1">
-          <label className="text-base font-medium">Repository Link</label>
+        <p className="mt-4">Repository Link</p>
+        <input
+          onChange={(e) => setRepoLink(e.target.value)}
+          value={repoLink}
+          type="url"
+          placeholder="GitHub URL"
+          className="w-full max-w-lg mt-2 p-2 border border-gray-300 outline-none rounded"
+        />
+
+        {/* Video Link */}
+        <p className="mt-4">Video Link</p>
+        <input
+          onChange={(e) => setVideoLink(e.target.value)}
+          value={videoLink}
+          type="url"
+          placeholder="YouTube demo link"
+          className="w-full max-w-lg mt-2 p-2 border border-gray-300 outline-none rounded"
+        />
+
+        {/* Publish Toggle */}
+        <div className="flex items-center mt-4 gap-2">
           <input
-            type="url"
-            name="repoLink"
-            value={formData.repoLink}
-            onChange={handleChange}
-            placeholder="https://github.com/your-repo"
-            className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-400/40"
+            type="checkbox"
+            checked={isPublished}
+            onChange={(e) => setIsPublished(e.target.checked)}
           />
+          <label>Publish Project</label>
         </div>
 
-        {/* YouTube Link */}
-        <div className="flex flex-col gap-1">
-          <label className="text-base font-medium">YouTube Link</label>
-          <input
-            type="url"
-            name="youtubeLink"
-            value={formData.youtubeLink}
-            onChange={handleChange}
-            placeholder="https://youtube.com/watch?v=..."
-            className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-400/40"
-          />
-        </div>
-
-        {/* Wireframe Upload */}
-        <div className="flex flex-col gap-1">
-          <label className="text-base font-medium">Wireframe Image</label>
-          <input
-            type="file"
-            name="wireframe"
-            accept="image/*"
-            onChange={handleChange}
-            className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-400/40"
-          />
-        </div>
-
-        {/* Submit Button */}
+        {/* Submit */}
         <button
           type="submit"
-          className="w-full px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition"
+          className="mt-6 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
         >
-          Add Project
+          Save Project
         </button>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 };
 

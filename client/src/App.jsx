@@ -7,7 +7,7 @@ import Dashboard from './pages/admin/Dashboard'
 import ListProject from './pages/admin/ListProject'
 import Login from './pages/Login'
 import AddProject from './pages/admin/AddProject'
-
+import 'quill/dist/quill.snow.css'
 const App = () => {
   return (
     <Routes>
