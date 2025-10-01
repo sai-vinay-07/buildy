@@ -9,7 +9,7 @@ const Footer = () => {
           
           {/* Logo + About */}
           <div className="max-w-96">
-            <img src={assets.logo} className='w-50' alt="Project Hub Logo" />
+            <img src={assets.buildy_logo} className='w-45 h-14' alt="Project Hub Logo" />
             <p className="mt-6 text-base text-gray-500">
               ProjectHub helps students discover beginner to advanced project ideas across domains like MERN, ML, Data Science, Cloud, and more. Build your skills with curated features, repos, and tutorials.
             </p>

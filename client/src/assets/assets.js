@@ -11,6 +11,7 @@ import blog_pic_10 from './blog_pic_10.png';
 import facebook_icon from './facebook_icon.svg'
 import googleplus_icon from './googleplus_icon.svg'
 import twitter_icon from './twitter_icon.svg'
+import buildy_logo from './buildy-high-resolution-logo-transparent.png'
 import logo from './logo.svg'
 import arrow from './arrow.svg'
 import logo_light from './logo_light.svg'
@@ -51,6 +52,7 @@ export const assets = {
     star_icon,
     home_icon,
     gradientBackground,
+    buildy_logo,
     list_icon,
     cross_icon,
     dashboard_icon_1,

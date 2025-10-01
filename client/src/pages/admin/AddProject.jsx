@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { assets } from "../../assets/assets";
+import { assets, projectsCategories} from "../../assets/assets";
+
 import Quill from "quill";
 import "quill/dist/quill.snow.css"; // Quill styles
 
@@ -159,6 +160,35 @@ const AddProject = () => {
           required
           className="w-full max-w-lg mt-2 p-2 border border-gray-300 outline-none rounded"
         />
+        {/* Category & Difficulty (added) */}
+        <div className="flex flex-col sm:flex-row sm:gap-4 mt-4">
+          <div className="flex-1">
+            <label className="block text-sm text-gray-700">Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className=" mt-2 p-2 border text-gray-500 border-gray-300 outline-none  rounded"
+            >
+              <option value=''>Select Category</option>
+              {projectsCategories.map((item,index)=>{
+                return <option key={index} value={item}>{item}</option>
+              })}
+            </select>
+          </div>
+
+          <div className="flex-1 mt-3 sm:mt-0">
+            <label className="block text-sm text-gray-700">Difficulty</label>
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+              className=" mt-2 p-2 border text-gray-500 border-gray-300 outline-none  rounded"
+            >
+              <option>Beginner</option>
+              <option>Intermediate</option>
+              <option>Advanced</option>
+            </select>
+          </div>
+        </div>
 
         {/* Description */}
         <p className="mt-4">Project Description</p>

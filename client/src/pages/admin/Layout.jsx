@@ -13,10 +13,10 @@ const Layout = () => {
   return (
     <>
       {/* Header */}
-      <div className='flex items-center justify-between px-4 py-4 h-[70px] sm:px-12 border-b border-gray-200'>
+      <div className='flex items-center justify-between px-4 py-6 h-[80px] sm:px-12 border-b border-gray-200'>
         <img
-          src={assets.logo}
-          className='w-32 sm:w-40 cursor-pointer'
+          src={assets.buildy_logo}
+          className='w-15 h-12 sm:w-40 cursor-pointer'
           onClick={() => navigate('/')}
           alt="Logo"
         />
