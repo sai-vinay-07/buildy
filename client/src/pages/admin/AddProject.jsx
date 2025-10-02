@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { assets, projectsCategories} from "../../assets/assets";
-
+import axios from 'axios';
 import Quill from "quill";
 import "quill/dist/quill.snow.css"; // Quill styles
 
@@ -26,26 +26,50 @@ const AddProject = () => {
   const [videoLink, setVideoLink] = useState("");
   const [isPublished, setIsPublished] = useState(false);
 
-  const onSubmitHandler = async (e) => {
-    e.preventDefault();
+const onSubmitHandler = async (e) => {
+  e.preventDefault();
 
-    const projectData = {
-      title,
-      description,
-      features,
-      keyConsiderations,
-      category,
-      difficulty,
-      repoLink,
-      videoLink,
-      isPublished,
-      image,
-      wireframe, // ✅ added wireframe to payload
+  try {
+    const formData = new FormData();
+
+    // Append stringified project data as JSON string
+    formData.append(
+      'project',
+      JSON.stringify({
+        title,
+        description,
+        features,
+        keyConsiderations,
+        category,
+        difficulty,
+        repoLink,
+        videoLink,
+        isPublished,
+      })
+    );
+
+    // Append image and wireframe files
+    if (image) formData.append('image', image);
+    if (wireframe) formData.append('wireframe', wireframe);
+
+    const token = localStorage.getItem('adminToken'); // assuming you store token on login
+
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`, // your auth token
+      },
     };
 
-    console.log("Submitting Project:", projectData);
-    // TODO: send to backend API
-  };
+    const response = await axios.post('http://localhost:4000/api/project/add', formData, config);
+
+    console.log('Project added:', response.data);
+    alert('Project added successfully');
+  } catch (error) {
+    console.error('Error uploading project:', error.response?.data || error.message);
+    alert('Failed to add project');
+  }
+};
 
   const generateContent = async () => {
     try {

@@ -2,12 +2,12 @@ const express = require('express')
 const cors = require('cors')
 const mongoose = require("mongoose")
 const dotenv = require('dotenv')
-const userRouter = require('./router/userRouter');
+const adminRouter = require('./router/adminRoutes')
+const projectRouter = require('./router/projectRoutes')
+const { addProject } = require('./controllers/projectController')
 
 dotenv.config()
 const app = express()
-
-mongoose.set('strictQuery', false); // Suppress Mongoose warning
 
 mongoose.connect(process.env.MONGODB_URI)
 .then(()=>{
@@ -22,7 +22,8 @@ app.use(cors())
 app.use(express.json())
 
 
-app.use('/api/users', userRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/project',projectRouter);
 
 app.listen(process.env.PORT,()=>{
     console.log("Server is running at port 5000")
