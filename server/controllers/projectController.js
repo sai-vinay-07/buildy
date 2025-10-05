@@ -2,6 +2,11 @@ const fs = require('fs');
 const { imagekit } = require('../config/imageKit')
 const Project = require('../models/project');
 const path = require('path');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const main = require('../config/gemini');
+
+require("dotenv").config();
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const addProject = async (req, res) => {
   try {
@@ -96,39 +101,50 @@ const addProject = async (req, res) => {
     await newProject.save();
 
     return res.status(201).json({
+      success: true,
       message: 'Project added successfully',
       project: newProject,
     });
   } catch (error) {
     console.error('Error adding project:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
 const getAllProjects = async(req,res)=>{
   try {
     const projects = await Project.find({isPublished : true})
-     return res.status(201).json({projects})
+     return res.status(200).json({success: true, projects})
   } catch (error) {
     console.error('Error fetch all project:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+}
+
+const getAllProjectsForAdmin = async(req,res)=>{
+  try {
+    const projects = await Project.find({})
+     return res.status(200).json({success: true, projects})
+  } catch (error) {
+    console.error('Error fetch all projects for admin:', error);
+    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 }
 
 const getProjectById = async (req,res)=>{
   try {
-    const {projectId} = req.parse;
+    const {projectId} = req.params;
     const project = await Project.findById(projectId)
     if(!project){
-      res.status(401).json({message : "Project is not found"})
+      return res.status(404).json({ success: false, message : "Project not found"})
     }
 
-    return res.status(200).json({project})
+    return res.status(200).json({success: true, project})
 
   } catch (error) {
     console.error('Error fetch project by Id:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
-  
+    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+
   }
 }
 
@@ -137,7 +153,7 @@ const deleteProjectById = async (req,res)=>{
   try {
     const {id} = req.body;
      await Project.findByIdAndDelete(id)
-    return res.status(200).json({ message : "Project Successfully Deleted!"})
+    return res.status(200).json({ success: true, message : "Project Successfully Deleted!"})
 
   } catch (error) {
     console.error('Error delete project by Id:', error);
@@ -152,11 +168,35 @@ const togglePublish = async (req,res)=>{
     const project = await Project.findById(id)
     project.isPublished = !project.isPublished;
     await project.save();
-    res.status(200).json({ message : "Project Status Updated "})
+    res.status(200).json({success: true , message : "Project Status Updated "})
   } catch (error) {
     
   }
 }
 
+const generateProjectContent = async (req, res) => {
+  try {
+    // Validate required fields in req.body
+    const { title, features, description } = req.body;
+    if (!title || !features || !description) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields: title, features, and description are required"
+      });
+    }
 
-module.exports = { addProject, getAllProjects, getProjectById, deleteProjectById, togglePublish  };
+    const content = await main({ title, features, description });
+    res.json({ success: true, generated: content });
+  } catch (error) {
+    console.error("Error in generateProjectContent:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to generate project content. Please try again."
+    });
+  }
+};
+
+
+
+
+module.exports = {generateProjectContent, addProject, getAllProjects, getAllProjectsForAdmin, getProjectById, deleteProjectById, togglePublish  };

@@ -3,16 +3,30 @@ import { useParams } from "react-router-dom";
 import { assets, project_data } from "../assets/assets";
 import Navbar from "../components/Navbar";
 import Footer from "./Footer";
-import { CheckIcon } from "lucide-react";
+
+import { useAppContext } from "../context/AppContent";
+import toast from "react-hot-toast";
 
 const Project = () => {
   const { id } = useParams();
+
+  const {axios} = useAppContext()
+
   const [data, setData] = useState(null);
 
-  useEffect(() => {
-    const found = project_data.find((item) => item._id === id);
-    setData(found);
-  }, [id]);
+  const fetchProjectData = async ()=>{
+    try {
+      const {data} = await axios.get(`/api/project/${id}`)
+      data.success ? setData(data.project) : toast.error(data.message)
+    }
+     catch (error) {
+      toast.error(error.message)
+    }
+  }
+
+  useEffect(()=>{
+     fetchProjectData()
+  },[])
 
   return data ? (
     <div className="relative bg-gray-50 min-h-screen">
@@ -40,9 +54,7 @@ const Project = () => {
 
           {/* Description */}
           {data.description && (
-            <p className="mt-3 md:text-lg text-sm leading-relaxed text-gray-600">
-              {data.description}
-            </p>
+            <div className="mt-3 md:text-lg text-sm leading-relaxed text-gray-600" dangerouslySetInnerHTML={{ __html: data.description }} />
           )}
 
           {/* Difficulty */}
@@ -57,14 +69,7 @@ const Project = () => {
           <h3 className="text-2xl font-semibold mt-8 mb-4 text-gray-900">
             Features
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-3 mb-10">
-            {data.features.map((feature, index) => (
-              <div key={index} className="flex items-start gap-2">
-                <CheckIcon className="text-blue-600 mt-1 w-5 h-5" />
-                <span className="text-base text-gray-700">{feature}</span>
-              </div>
-            ))}
-          </div>
+          <div className="mb-10 text-gray-700" dangerouslySetInnerHTML={{ __html: data.features }} />
 
           {/* Key Considerations */}
           {data.keyConsiderations && (
@@ -72,14 +77,7 @@ const Project = () => {
               <h3 className="text-2xl font-semibold mb-4 text-gray-900">
                 Key Considerations
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-3 mb-10">
-                {data.keyConsiderations.map((point, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <CheckIcon className="text-green-600 mt-1 w-5 h-5" />
-                    <span className="text-base text-gray-700">{point}</span>
-                  </div>
-                ))}
-              </div>
+              <div className="mb-10 text-gray-700" dangerouslySetInnerHTML={{ __html: data.keyConsiderations }} />
             </>
           )}
         </div>

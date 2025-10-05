@@ -1,9 +1,40 @@
 import React from 'react'
 import { assets } from '../../assets/assets'
+import axios from 'axios'
+import toast from 'react-hot-toast'
 
 const ProjectTableItem = ({ project, fetchProjects, index }) => {
-  const { title, createdAt, isPublished } = project
+  const { _id, title, createdAt, isPublished } = project
   const projectDate = new Date(createdAt)
+
+  const togglePublish = async () => {
+    try {
+      const { data } = await axios.post('/api/project/togglePublish', { id: _id });
+      if (data.success) {
+        toast.success(data.message);
+        fetchProjects();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error('Failed to toggle publish status');
+    }
+  }
+
+  const deleteProject = async () => {
+    if (!confirm('Are you sure you want to delete this project?')) return;
+    try {
+      const { data } = await axios.post('/api/project/delete', { id: _id });
+      if (data.success) {
+        toast.success(data.message);
+        fetchProjects();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error('Failed to delete project');
+    }
+  }
 
   return (
     <tr className="border-t border-gray-200 hover:bg-gray-50 transition">
@@ -24,19 +55,15 @@ const ProjectTableItem = ({ project, fetchProjects, index }) => {
       <td className="px-6 py-4">
         <div className="flex justify-center items-center gap-3">
           <button
-            onClick={() => {
-              // toggle publish/unpublish logic
-              fetchProjects()
-            }}
+            onClick={togglePublish}
             className="px-3 py-1 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
           >
             {isPublished ? "Unpublish" : "Publish"}
           </button>
           <button
-            onClick={() => {
-              // delete logic
-              fetchProjects()
-            }} className=' hover:scale-110 transition-all'  >
+            onClick={deleteProject}
+            className=' hover:scale-110 transition-all'
+          >
             <img
               src={assets.cross_icon}
               alt="Delete"

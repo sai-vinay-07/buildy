@@ -26,12 +26,12 @@ const Navbar = () => {
               Dashboard
               <img src={assets.arrow} className="w-3" alt="" />
             </button>
-            <button
+            {/* <button
               onClick={logout}
-              className="flex items-center gap-2 text-base justify-center cursor-pointer px-5 py-2.5 bg-red-600 hover:bg-red-500 transition text-white rounded-full"
+              className="flex items-center gap-2 text-base justify-center cursor-pointer px-5 py-2.5 bg-blue-600 hover:bg-blue-500 transition text-white rounded-full"
             >
               Logout
-            </button>
+            </button> */}
           </>
         ) : (
           <button

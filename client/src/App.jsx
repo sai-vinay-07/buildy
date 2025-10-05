@@ -9,7 +9,7 @@ import Login from './pages/Login'
 import AddProject from './pages/admin/AddProject'
 import 'quill/dist/quill.snow.css'
 import { Toaster } from 'react-hot-toast'
-import { useAppContext } from './context/AppContext'   // ✅ check filename
+import { useAppContext } from './context/AppContent'   // ✅ check filename
 
 // ✅ PrivateRoute wrapper
 const PrivateRoute = ({ children }) => {
@@ -25,7 +25,7 @@ const App = () => {
         {/* Public Routes */}
         <Route path='/' element={<Home />} />
         <Route path='/project/:id' element={<Project />} />
-
+        <Route path='/login' element={<Login/>}/>
         {/* Admin Routes (Protected) */}
         <Route
           path='/admin'

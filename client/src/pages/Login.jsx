@@ -1,18 +1,18 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContent";
 import { toast, Toaster } from "react-hot-toast";
 
 const Login = () => {
-  const { axios, setToken, navigate } = useAppContext();
+  const { axios, setToken } = useAppContext();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
       const { data } = await axios.post("/api/admin/login", {
@@ -26,14 +26,13 @@ const Login = () => {
         localStorage.setItem("token", data.token);
         axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
 
-        toast.success("Login successful!");
+        toast.success("Login Successful!");
         navigate("/admin"); // redirect to dashboard
       } else {
         toast.error(data.message || "Login failed");
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Invalid email or password");
-      setError("Invalid email or password");
     } finally {
       setLoading(false);
     }
@@ -41,7 +40,6 @@ const Login = () => {
 
   return (
     <>
-      {/* ✅ Toaster */}
       <Toaster
         position="top-right"
         toastOptions={{
@@ -89,7 +87,6 @@ const Login = () => {
                   className="border-b-2 border-gray-300 p-2 outline-none mb-6"
                 />
               </div>
-              {error && <p className="text-red-600 mb-4">{error}</p>}
               <button
                 className="w-full py-3 font-medium bg-blue-700 text-white rounded cursor-pointer hover:bg-blue-600/90 transition-all"
                 type="submit"

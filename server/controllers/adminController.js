@@ -13,7 +13,7 @@ const adminLogin = async (req,res)=>{
         }
 
         const token = jwt.sign({email}, process.env.JWT_SECRET)
-        res.status(200).json({ message : "Admin Login Successfully ",token})
+        res.status(200).json({ success: true, message : "Admin Login Successfully", token })
     } catch (error) {
         res.status(500).json({ error : 'Admin Login Failed!'})
     }

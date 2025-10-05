@@ -26,5 +26,5 @@ app.use('/api/admin', adminRouter);
 app.use('/api/project',projectRouter);
 
 app.listen(process.env.PORT,()=>{
-    console.log("Server is running at port 5000")
+    console.log(`Server is running at port ${process.env.PORT}`)
 })

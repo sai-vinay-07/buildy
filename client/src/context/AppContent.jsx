@@ -46,6 +46,7 @@ const AppProvider = ({ children }) => {
     setProjects,
     input,
     setInput,
+    fetchProjects,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

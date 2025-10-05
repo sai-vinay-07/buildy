@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { assets } from '../../assets/assets'
 import ProjectTableItem from './ProjectTableItem'
+import axios from 'axios'
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({
@@ -9,24 +10,19 @@ const Dashboard = () => {
   })
 
   const fetchDashboard = async () => {
-    // TODO: Replace with backend API call
-    setDashboardData({
-      projects: 3,
-      recentProjects: [
-        {
-          _id: "001",
-          title: "Portfolio Website",
-          createdAt: new Date(),
-          isPublished: true,
-        },
-        {
-          _id: "002",
-          title: "Blog API",
-          createdAt: new Date(),
-          isPublished: false,
-        }
-      ]
-    })
+    try {
+      const { data } = await axios.get('/api/project/all/admin');
+      if (data.success) {
+        setDashboardData({
+          projects: data.projects.length,
+          recentProjects: data.projects.slice(-5).reverse() // last 5, most recent first
+        });
+      } else {
+        console.error('Failed to fetch projects:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    }
   }
 
   useEffect(() => {

@@ -1,10 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
-import { assets, projectsCategories} from "../../assets/assets";
-import axios from 'axios';
+import { assets, projectsCategories } from "../../assets/assets";
 import Quill from "quill";
-import "quill/dist/quill.snow.css"; // Quill styles
+import "quill/dist/quill.snow.css";
+import { useAppContext } from "../../context/AppContent";
+import toast from "react-hot-toast";
 
 const AddProject = () => {
+  const { axios, fetchProjects } = useAppContext();
+
+  const [isAdding, setIsAdding] = useState(false);
+
+  // Separate AI generating states
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  const [isGeneratingFeatures, setIsGeneratingFeatures] = useState(false);
+  const [isGeneratingKeys, setIsGeneratingKeys] = useState(false);
+
   const descriptionRef = useRef(null);
   const featuresRef = useRef(null);
   const keyRef = useRef(null);
@@ -13,29 +23,75 @@ const AddProject = () => {
   const featuresQuill = useRef(null);
   const keyQuill = useRef(null);
 
-  const [image, setImage] = useState(false);
-  const [wireframe, setWireframe] = useState(false); // ✅ for wireframe upload
+  const [image, setImage] = useState(null);
+  const [wireframe, setWireframe] = useState(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [features, setFeatures] = useState("");
   const [keyConsiderations, setKeyConsiderations] = useState("");
   const [category, setCategory] = useState("Startup");
-  const [difficulty, setDifficulty] = useState("");
+  const [difficulty, setDifficulty] = useState("Beginner");
   const [repoLink, setRepoLink] = useState("");
   const [videoLink, setVideoLink] = useState("");
   const [isPublished, setIsPublished] = useState(false);
 
-const onSubmitHandler = async (e) => {
-  e.preventDefault();
+  // Initialize Quill editors
+  useEffect(() => {
+    if (!descriptionQuill.current && descriptionRef.current) {
+      descriptionQuill.current = new Quill(descriptionRef.current, {
+        theme: "snow",
+        placeholder: "Write a short description...",
+      });
+      descriptionQuill.current.on("text-change", () =>
+        setDescription(descriptionQuill.current.root.innerHTML)
+      );
+    }
+    if (!featuresQuill.current && featuresRef.current) {
+      featuresQuill.current = new Quill(featuresRef.current, {
+        theme: "snow",
+        placeholder: "List main features...",
+      });
+      featuresQuill.current.on("text-change", () =>
+        setFeatures(featuresQuill.current.root.innerHTML)
+      );
+    }
+    if (!keyQuill.current && keyRef.current) {
+      keyQuill.current = new Quill(keyRef.current, {
+        theme: "snow",
+        placeholder: "Add key considerations...",
+      });
+      keyQuill.current.on("text-change", () =>
+        setKeyConsiderations(keyQuill.current.root.innerHTML)
+      );
+    }
+  }, []);
 
-  try {
-    const formData = new FormData();
+  // Reset form
+  const resetForm = () => {
+    setImage(null);
+    setWireframe(null);
+    setTitle("");
+    setDescription("");
+    setFeatures("");
+    setKeyConsiderations("");
+    setCategory("Startup");
+    setDifficulty("Beginner");
+    setRepoLink("");
+    setVideoLink("");
+    setIsPublished(false);
 
-    // Append stringified project data as JSON string
-    formData.append(
-      'project',
-      JSON.stringify({
+    descriptionQuill.current?.setContents([]);
+    featuresQuill.current?.setContents([]);
+    keyQuill.current?.setContents([]);
+  };
+
+  // Add project
+  const onSubmitHandler = async (e) => {
+    e.preventDefault();
+    setIsAdding(true);
+    try {
+      const project = {
         title,
         description,
         features,
@@ -45,95 +101,104 @@ const onSubmitHandler = async (e) => {
         repoLink,
         videoLink,
         isPublished,
-      })
-    );
+      };
+      const formData = new FormData();
+      formData.append("project", JSON.stringify(project));
+      if (image) formData.append("image", image);
+      if (wireframe) formData.append("wireframe", wireframe);
 
-    // Append image and wireframe files
-    if (image) formData.append('image', image);
-    if (wireframe) formData.append('wireframe', wireframe);
+      const { data } = await axios.post("/api/project/add", formData);
 
-    const token = localStorage.getItem('adminToken'); // assuming you store token on login
-
-    const config = {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`, // your auth token
-      },
-    };
-
-    const response = await axios.post('http://localhost:4000/api/project/add', formData, config);
-
-    console.log('Project added:', response.data);
-    alert('Project added successfully');
-  } catch (error) {
-    console.error('Error uploading project:', error.response?.data || error.message);
-    alert('Failed to add project');
-  }
-};
-
-  const generateContent = async () => {
-    try {
-      const prompt = `
-      Generate the following project details:
-      - Description (2–3 lines)
-      - Features (bullet points)
-      - Key Considerations (bullet points)
-      for a project titled: "${title}" in category "${category}".
-      `;
-
-      const res = await fetch("http://localhost:5000/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
-
-      const data = await res.json();
-
-      if (data.description) setDescription(data.description);
-      if (featuresQuill.current) {
-        featuresQuill.current.root.innerHTML = data.features;
-        setFeatures(data.features);
+      if (data.success) {
+        toast.success(data.message);
+        resetForm();
+        fetchProjects?.();
+      } else {
+        toast.error(data.message);
       }
-      if (keyQuill.current) {
-        keyQuill.current.root.innerHTML = data.keyConsiderations;
-        setKeyConsiderations(data.keyConsiderations);
-      }
-    } catch (err) {
-      console.error("Error generating content:", err);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to add project"
+      );
+    } finally {
+      setIsAdding(false);
     }
   };
 
-  useEffect(() => {
-    if (!descriptionQuill.current && descriptionRef.current) {
-      descriptionQuill.current = new Quill(descriptionRef.current, {
-        theme: "snow",
-        placeholder: "Write a short description...",
+  // Generate Description
+  const generateDescription = async () => {
+    if (!title) return toast.error("Enter title first");
+    setIsGeneratingDescription(true);
+    try {
+      const { data } = await axios.post("/api/project/generate-content", {
+        type: "description",
+        title,
+        category,
       });
-      descriptionQuill.current.on("text-change", () => {
+      if (data.success && data.generated?.description && descriptionQuill.current) {
+        descriptionQuill.current.setContents(
+          descriptionQuill.current.clipboard.convert(data.generated.description)
+        );
         setDescription(descriptionQuill.current.root.innerHTML);
-      });
+      } else toast.error("Failed to generate description");
+    } catch (err) {
+      toast.error(err.message || "Error generating description");
+    } finally {
+      setIsGeneratingDescription(false);
     }
+  };
 
-    if (!featuresQuill.current && featuresRef.current) {
-      featuresQuill.current = new Quill(featuresRef.current, {
-        theme: "snow",
-        placeholder: "List main features...",
+  // Generate Features
+  const generateFeatures = async () => {
+    if (!title) return toast.error("Enter title first");
+    setIsGeneratingFeatures(true);
+    try {
+      const { data } = await axios.post("/api/project/generate-content", {
+        type: "features",
+        title,
+        category,
       });
-      featuresQuill.current.on("text-change", () => {
+      if (data.success && data.generated?.features && featuresQuill.current) {
+        const htmlFeatures = `<ul>${data.generated.features
+          .map((f) => `<li>${f}</li>`)
+          .join("")}</ul>`;
+        featuresQuill.current.setContents(
+          featuresQuill.current.clipboard.convert(htmlFeatures)
+        );
         setFeatures(featuresQuill.current.root.innerHTML);
-      });
+      } else toast.error("Failed to generate features");
+    } catch (err) {
+      toast.error(err.message || "Error generating features");
+    } finally {
+      setIsGeneratingFeatures(false);
     }
+  };
 
-    if (!keyQuill.current && keyRef.current) {
-      keyQuill.current = new Quill(keyRef.current, {
-        theme: "snow",
-        placeholder: "Add key considerations...",
+  // Generate Key Considerations
+  const generateKeyConsiderations = async () => {
+    if (!title) return toast.error("Enter title first");
+    setIsGeneratingKeys(true);
+    try {
+      const { data } = await axios.post("/api/project/generate-content", {
+        type: "keyConsiderations",
+        title,
+        category,
       });
-      keyQuill.current.on("text-change", () => {
+      if (data.success && data.generated?.keyConsiderations && keyQuill.current) {
+        const htmlKeys = `<ul>${data.generated.keyConsiderations
+          .map((k) => `<li>${k}</li>`)
+          .join("")}</ul>`;
+        keyQuill.current.setContents(keyQuill.current.clipboard.convert(htmlKeys));
         setKeyConsiderations(keyQuill.current.root.innerHTML);
-      });
+      } else toast.error("Failed to generate key considerations");
+    } catch (err) {
+      toast.error(err.message || "Error generating key considerations");
+    } finally {
+      setIsGeneratingKeys(false);
     }
-  }, []);
+  };
 
   return (
     <form
@@ -146,31 +211,34 @@ const onSubmitHandler = async (e) => {
         <label htmlFor="image">
           <img
             src={!image ? assets.upload_area : URL.createObjectURL(image)}
-            className="mt-2 h-16 rounded cursor-pointer"
-            alt=""
+            className="mt-2 h-16 rounded cursor-pointer object-cover"
+            alt="Upload thumbnail"
           />
           <input
             onChange={(e) => setImage(e.target.files[0])}
             type="file"
             id="image"
             hidden
+            accept="image/*"
             required
           />
         </label>
 
-        {/* Wireframe Upload */}
+        {/* Wireframe */}
         <p className="mt-4">Upload Wireframe</p>
         <label htmlFor="wireframe">
           <img
             src={!wireframe ? assets.upload_area : URL.createObjectURL(wireframe)}
-            className="mt-2 h-16 rounded cursor-pointer"
-            alt=""
+            className="mt-2 h-16 rounded cursor-pointer object-cover"
+            alt="Upload wireframe"
           />
           <input
             onChange={(e) => setWireframe(e.target.files[0])}
             type="file"
             id="wireframe"
             hidden
+            accept="image/*"
+            required
           />
         </label>
 
@@ -184,28 +252,32 @@ const onSubmitHandler = async (e) => {
           required
           className="w-full max-w-lg mt-2 p-2 border border-gray-300 outline-none rounded"
         />
-        {/* Category & Difficulty (added) */}
+
+        {/* Category & Difficulty */}
         <div className="flex flex-col sm:flex-row sm:gap-4 mt-4">
           <div className="flex-1">
             <label className="block text-sm text-gray-700">Category</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className=" mt-2 p-2 border text-gray-500 border-gray-300 outline-none  rounded"
+              className="mt-2 p-2 border text-gray-500 border-gray-300 outline-none rounded"
+              required
             >
-              <option value=''>Select Category</option>
-              {projectsCategories.map((item,index)=>{
-                return <option key={index} value={item}>{item}</option>
-              })}
+              <option value="">Select Category</option>
+              {projectsCategories.map((item, i) => (
+                <option key={i} value={item}>
+                  {item}
+                </option>
+              ))}
             </select>
           </div>
-
           <div className="flex-1 mt-3 sm:mt-0">
             <label className="block text-sm text-gray-700">Difficulty</label>
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
-              className=" mt-2 p-2 border text-gray-500 border-gray-300 outline-none  rounded"
+              className="mt-2 p-2 border text-gray-500 border-gray-300 outline-none rounded"
+              required
             >
               <option>Beginner</option>
               <option>Intermediate</option>
@@ -216,32 +288,53 @@ const onSubmitHandler = async (e) => {
 
         {/* Description */}
         <p className="mt-4">Project Description</p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={generateDescription}
+            disabled={isGeneratingDescription}
+            className="text-sm text-white bg-black/70 px-4 py-2 rounded hover:bg-black disabled:opacity-50"
+          >
+            {isGeneratingDescription ? "Generating..." : "Generate Description"}
+          </button>
+        </div>
         <div className="max-w-lg h-40 pb-16 pt-2 relative">
           <div ref={descriptionRef}></div>
         </div>
 
         {/* Features */}
         <p className="mt-4">Project Features</p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={generateFeatures}
+            disabled={isGeneratingFeatures}
+            className="text-sm text-white bg-black/70 px-4 py-2 rounded hover:bg-black disabled:opacity-50"
+          >
+            {isGeneratingFeatures ? "Generating..." : "Generate Features"}
+          </button>
+        </div>
         <div className="max-w-lg h-40 pb-16 pt-2 relative">
           <div ref={featuresRef}></div>
         </div>
 
         {/* Key Considerations */}
         <p className="mt-4">Key Considerations</p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={generateKeyConsiderations}
+            disabled={isGeneratingKeys}
+            className="text-sm text-white bg-black/70 px-4 py-2 rounded hover:bg-black disabled:opacity-50"
+          >
+            {isGeneratingKeys ? "Generating..." : "Generate Key Considerations"}
+          </button>
+        </div>
         <div className="max-w-lg h-40 pb-16 pt-2 relative">
           <div ref={keyRef}></div>
         </div>
 
-        {/* AI Button */}
-        <button
-          className="mt-4 text-sm text-white bg-black/70 px-4 py-2 rounded hover:bg-black"
-          type="button"
-          onClick={generateContent}
-        >
-          Generate with AI
-        </button>
-
-        {/* Repo Link */}
+        {/* Repo */}
         <p className="mt-4">Repository Link</p>
         <input
           onChange={(e) => setRepoLink(e.target.value)}
@@ -249,9 +342,10 @@ const onSubmitHandler = async (e) => {
           type="url"
           placeholder="GitHub URL"
           className="w-full max-w-lg mt-2 p-2 border border-gray-300 outline-none rounded"
+          required
         />
 
-        {/* Video Link */}
+        {/* Video */}
         <p className="mt-4">Video Link</p>
         <input
           onChange={(e) => setVideoLink(e.target.value)}
@@ -259,9 +353,10 @@ const onSubmitHandler = async (e) => {
           type="url"
           placeholder="YouTube demo link"
           className="w-full max-w-lg mt-2 p-2 border border-gray-300 outline-none rounded"
+          required
         />
 
-        {/* Publish Toggle */}
+        {/* Publish */}
         <div className="flex items-center mt-4 gap-2">
           <input
             type="checkbox"
@@ -273,10 +368,11 @@ const onSubmitHandler = async (e) => {
 
         {/* Submit */}
         <button
+          disabled={isAdding}
           type="submit"
-          className="mt-6 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+          className="mt-6 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
         >
-          Save Project
+          {isAdding ? "Adding..." : "Add Project"}
         </button>
       </div>
     </form>
