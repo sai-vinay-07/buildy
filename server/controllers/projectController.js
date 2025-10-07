@@ -1,12 +1,8 @@
 const fs = require('fs');
-const { imagekit } = require('../config/imageKit')
-const Project = require('../models/project');
 const path = require('path');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const main = require('../config/gemini');
-
-require("dotenv").config();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const Project = require('../models/project');
+const { imagekit } = require('../config/imageKit');
+const { runGemini } = require('../config/gemini');
 
 const addProject = async (req, res) => {
   try {
@@ -22,7 +18,6 @@ const addProject = async (req, res) => {
       isPublished,
     } = JSON.parse(req.body.project);
 
-    // Check all required fields
     if (
       !title ||
       !description ||
@@ -39,7 +34,7 @@ const addProject = async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    //  Upload project image
+    // Upload project image
     const imageFile = req.files.image[0];
     const imageBuffer = fs.readFileSync(imageFile.path);
     const imageUpload = await imagekit.upload({
@@ -47,21 +42,13 @@ const addProject = async (req, res) => {
       fileName: imageFile.originalname,
       folder: '/projects/images',
     });
-
-    // Optimize project image URL
     const optimizeImageUrl = imagekit.url({
       path: imageUpload.filePath,
-      transformation: [
-        { quality: 'auto' },
-        { format: 'webp' },
-        { width: '1280' },
-      ],
+      transformation: [{ quality: 'auto' }, { format: 'webp' }, { width: '1280' }],
     });
-
-    // remove local file
     fs.unlinkSync(imageFile.path);
 
-    // Upload wireframe image
+    // Upload wireframe
     const wireframeFile = req.files.wireframe[0];
     const wireframeBuffer = fs.readFileSync(wireframeFile.path);
     const wireframeUpload = await imagekit.upload({
@@ -69,21 +56,12 @@ const addProject = async (req, res) => {
       fileName: wireframeFile.originalname,
       folder: '/projects/wireframes',
     });
-
-    //  Optimize wireframe image URL
     const optimizeWireframeUrl = imagekit.url({
       path: wireframeUpload.filePath,
-      transformation: [
-        { quality: 'auto' },
-        { format: 'webp' },
-        { width: '1280' },
-      ],
+      transformation: [{ quality: 'auto' }, { format: 'webp' }, { width: '1280' }],
     });
-
-    // remove local file
     fs.unlinkSync(wireframeFile.path);
 
-    // Save to DB
     const newProject = new Project({
       title,
       description,
@@ -93,110 +71,112 @@ const addProject = async (req, res) => {
       difficulty,
       repoLink,
       videoLink,
-      image: optimizeImageUrl,      // optimized project image
-      wireframe: optimizeWireframeUrl, // optimized wireframe
+      image: optimizeImageUrl,
+      wireframe: optimizeWireframeUrl,
       isPublished,
     });
 
     await newProject.save();
 
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
       message: 'Project added successfully',
       project: newProject,
     });
   } catch (error) {
     console.error('Error adding project:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
-const getAllProjects = async(req,res)=>{
+// --- Remaining CRUD and AI endpoints ---
+
+const getAllProjects = async (req, res) => {
   try {
-    const projects = await Project.find({isPublished : true})
-     return res.status(200).json({success: true, projects})
+    const projects = await Project.find({ isPublished: true });
+    res.status(200).json({ success: true, projects });
   } catch (error) {
-    console.error('Error fetch all project:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
-}
+};
 
-const getAllProjectsForAdmin = async(req,res)=>{
+const getAllProjectsForAdmin = async (req, res) => {
   try {
-    const projects = await Project.find({})
-     return res.status(200).json({success: true, projects})
+    const projects = await Project.find({});
+    res.status(200).json({ success: true, projects });
   } catch (error) {
-    console.error('Error fetch all projects for admin:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
-}
+};
 
-const getProjectById = async (req,res)=>{
+const getProjectById = async (req, res) => {
   try {
-    const {projectId} = req.params;
-    const project = await Project.findById(projectId)
-    if(!project){
-      return res.status(404).json({ success: false, message : "Project not found"})
-    }
-
-    return res.status(200).json({success: true, project})
-
+    const { projectId } = req.params;
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ success: false, message: 'Not found' });
+    res.status(200).json({ success: true, project });
   } catch (error) {
-    console.error('Error fetch project by Id:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
-
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
-}
+};
 
-
-const deleteProjectById = async (req,res)=>{
+const deleteProjectById = async (req, res) => {
   try {
-    const {id} = req.body;
-     await Project.findByIdAndDelete(id)
-    return res.status(200).json({ success: true, message : "Project Successfully Deleted!"})
-
+    const { id } = req.body;
+    await Project.findByIdAndDelete(id);
+    res.status(200).json({ success: true, message: 'Project deleted' });
   } catch (error) {
-    console.error('Error delete project by Id:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
-  
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
-}
+};
 
-const togglePublish = async (req,res)=>{
+const togglePublish = async (req, res) => {
   try {
-    const {id} = req.body;
-    const project = await Project.findById(id)
+    const { id } = req.body;
+    const project = await Project.findById(id);
     project.isPublished = !project.isPublished;
     await project.save();
-    res.status(200).json({success: true , message : "Project Status Updated "})
+    res.status(200).json({ success: true, message: 'Status updated' });
   } catch (error) {
-    
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
-}
+};
 
 const generateProjectContent = async (req, res) => {
   try {
-    // Validate required fields in req.body
-    const { title, features, description } = req.body;
-    if (!title || !features || !description) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields: title, features, and description are required"
-      });
+    const { type, title, category } = req.body;
+    if (!type || !title || !category)
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+
+    let prompt = '';
+    let generatedContent = {};
+
+    if (type === 'description') {
+      prompt = `Generate a project description for a ${category} project titled "${title}".`;
+      const description = await runGemini(prompt);
+      generatedContent = { description };
+    } else if (type === 'features') {
+      prompt = `Generate a JSON array of 5-7 key features for a ${category} project titled "${title}".`;
+      const response = await runGemini(prompt);
+      generatedContent = { features: JSON.parse(response.trim()) };
+    } else if (type === 'keyConsiderations') {
+      prompt = `Generate a JSON array of 5-7 key considerations for a ${category} project titled "${title}".`;
+      const response = await runGemini(prompt);
+      generatedContent = { keyConsiderations: JSON.parse(response.trim()) };
     }
 
-    const content = await main({ title, features, description });
-    res.json({ success: true, generated: content });
+    res.json({ success: true, generated: generatedContent });
   } catch (error) {
-    console.error("Error in generateProjectContent:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to generate project content. Please try again."
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-
-
-
-module.exports = {generateProjectContent, addProject, getAllProjects, getAllProjectsForAdmin, getProjectById, deleteProjectById, togglePublish  };
+module.exports = {
+  addProject,
+  getAllProjects,
+  getAllProjectsForAdmin,
+  getProjectById,
+  deleteProjectById,
+  togglePublish,
+  generateProjectContent,
+};

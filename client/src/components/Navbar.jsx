@@ -6,13 +6,13 @@ const Navbar = () => {
   const { navigate, token, logout } = useAppContext();
 
   return (
-    <div className="relative h-[110px] flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-6">
+    <div className="relative h-[100px] flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-6">
       {/* Logo */}
       <img
         src={assets.buildy_logo}
         onClick={() => navigate("/")}
         alt="logo"
-        className="h-14 w-45 cursor-pointer"
+        className="h-10 w-32 cursor-pointer object-contain"
       />
 
       {/* Right-side buttons */}

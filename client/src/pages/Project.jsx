@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { assets, project_data } from "../assets/assets";
+import { assets } from "../assets/assets";
 import Navbar from "../components/Navbar";
 import Footer from "./Footer";
 
@@ -9,24 +9,22 @@ import toast from "react-hot-toast";
 
 const Project = () => {
   const { id } = useParams();
-
-  const {axios} = useAppContext()
+  const { axios } = useAppContext();
 
   const [data, setData] = useState(null);
 
-  const fetchProjectData = async ()=>{
+  const fetchProjectData = async () => {
     try {
-      const {data} = await axios.get(`/api/project/${id}`)
-      data.success ? setData(data.project) : toast.error(data.message)
+      const { data } = await axios.get(`/api/project/${id}`);
+      data.success ? setData(data.project) : toast.error(data.message);
+    } catch (error) {
+      toast.error(error.message);
     }
-     catch (error) {
-      toast.error(error.message)
-    }
-  }
+  };
 
-  useEffect(()=>{
-     fetchProjectData()
-  },[])
+  useEffect(() => {
+    fetchProjectData();
+  }, []);
 
   return data ? (
     <div className="relative bg-gray-50 min-h-screen">
@@ -43,7 +41,7 @@ const Project = () => {
       <div
         className="relative z-10 flex flex-col-reverse lg:flex-row gap-12 items-start justify-between 
                    lg:px-20 md:px-12 sm:px-6 px-4 
-                   lg:pt-16 md:pt-28 pt-10 pb-20"  // 👈 Added bottom padding
+                   lg:pt-16 md:pt-28 pt-10 pb-20"
       >
         {/* Left Content */}
         <div className="w-full lg:max-w-3xl text-gray-700">
@@ -54,7 +52,10 @@ const Project = () => {
 
           {/* Description */}
           {data.description && (
-            <div className="mt-3 md:text-lg text-sm leading-relaxed text-gray-600" dangerouslySetInnerHTML={{ __html: data.description }} />
+            <div
+              className="prose prose-gray max-w-none mt-4 md:text-lg text-sm"
+              dangerouslySetInnerHTML={{ __html: data.description }}
+            />
           )}
 
           {/* Difficulty */}
@@ -66,10 +67,17 @@ const Project = () => {
           )}
 
           {/* Features */}
-          <h3 className="text-2xl font-semibold mt-8 mb-4 text-gray-900">
-            Features
-          </h3>
-          <div className="mb-10 text-gray-700" dangerouslySetInnerHTML={{ __html: data.features }} />
+          {data.features && (
+            <>
+              <h3 className="text-2xl font-semibold mt-8 mb-4 text-gray-900">
+                Features
+              </h3>
+              <div
+                className="prose prose-blue max-w-none mb-10"
+                dangerouslySetInnerHTML={{ __html: data.features }}
+              />
+            </>
+          )}
 
           {/* Key Considerations */}
           {data.keyConsiderations && (
@@ -77,7 +85,10 @@ const Project = () => {
               <h3 className="text-2xl font-semibold mb-4 text-gray-900">
                 Key Considerations
               </h3>
-              <div className="mb-10 text-gray-700" dangerouslySetInnerHTML={{ __html: data.keyConsiderations }} />
+              <div
+                className="prose prose-indigo max-w-none mb-10"
+                dangerouslySetInnerHTML={{ __html: data.keyConsiderations }}
+              />
             </>
           )}
         </div>

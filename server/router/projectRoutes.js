@@ -8,25 +8,27 @@ const {
   getProjectById,
   deleteProjectById,
   togglePublish,
-  generateProjectContent
+  generateProjectContent,
 } = require('../controllers/projectController');
 
-const route = express.Router();
+const router = express.Router();
 
-route.post('/add',
- auth,
+// Secure admin operations
+router.post(
+  '/add',
+  auth,
   upload.fields([
     { name: 'image', maxCount: 1 },
-    { name: 'wireframe', maxCount: 1 }
+    { name: 'wireframe', maxCount: 1 },
   ]),
   addProject
 );
 
-route.post("/generate", auth , generateProjectContent);
-route.get('/all', getAllProjects);
-route.get('/all/admin', auth, getAllProjectsForAdmin);
-route.get('/:projectId', getProjectById);
-route.post('/delete', auth, deleteProjectById);
-route.post('/togglePublish', auth, togglePublish);
+router.post('/generate', auth, generateProjectContent);
+router.get('/all', getAllProjects);
+router.get('/all/admin', auth, getAllProjectsForAdmin);
+router.get('/:projectId', getProjectById);
+router.post('/delete', auth, deleteProjectById);
+router.post('/togglePublish', auth, togglePublish);
 
-module.exports = route;
+module.exports = router;

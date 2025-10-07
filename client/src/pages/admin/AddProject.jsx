@@ -9,8 +9,6 @@ const AddProject = () => {
   const { axios, fetchProjects } = useAppContext();
 
   const [isAdding, setIsAdding] = useState(false);
-
-  // Separate AI generating states
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isGeneratingFeatures, setIsGeneratingFeatures] = useState(false);
   const [isGeneratingKeys, setIsGeneratingKeys] = useState(false);
@@ -18,7 +16,6 @@ const AddProject = () => {
   const descriptionRef = useRef(null);
   const featuresRef = useRef(null);
   const keyRef = useRef(null);
-
   const descriptionQuill = useRef(null);
   const featuresQuill = useRef(null);
   const keyQuill = useRef(null);
@@ -80,13 +77,12 @@ const AddProject = () => {
     setRepoLink("");
     setVideoLink("");
     setIsPublished(false);
-
     descriptionQuill.current?.setContents([]);
     featuresQuill.current?.setContents([]);
     keyQuill.current?.setContents([]);
   };
 
-  // Add project
+  // ✅ Add Project (correct API call)
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     setIsAdding(true);
@@ -102,12 +98,15 @@ const AddProject = () => {
         videoLink,
         isPublished,
       };
+
       const formData = new FormData();
       formData.append("project", JSON.stringify(project));
       if (image) formData.append("image", image);
       if (wireframe) formData.append("wireframe", wireframe);
 
-      const { data } = await axios.post("/api/project/add", formData);
+      const { data } = await axios.post("/api/project/add", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       if (data.success) {
         toast.success(data.message);
@@ -127,12 +126,12 @@ const AddProject = () => {
     }
   };
 
-  // Generate Description
+  // ✅ Generate Description
   const generateDescription = async () => {
     if (!title) return toast.error("Enter title first");
     setIsGeneratingDescription(true);
     try {
-      const { data } = await axios.post("/api/project/generate-content", {
+      const { data } = await axios.post("/api/project/generate", {
         type: "description",
         title,
         category,
@@ -144,18 +143,18 @@ const AddProject = () => {
         setDescription(descriptionQuill.current.root.innerHTML);
       } else toast.error("Failed to generate description");
     } catch (err) {
-      toast.error(err.message || "Error generating description");
+      toast.error(err.response?.data?.message || "Error generating description");
     } finally {
       setIsGeneratingDescription(false);
     }
   };
 
-  // Generate Features
+  // ✅ Generate Features
   const generateFeatures = async () => {
     if (!title) return toast.error("Enter title first");
     setIsGeneratingFeatures(true);
     try {
-      const { data } = await axios.post("/api/project/generate-content", {
+      const { data } = await axios.post("/api/project/generate", {
         type: "features",
         title,
         category,
@@ -170,18 +169,18 @@ const AddProject = () => {
         setFeatures(featuresQuill.current.root.innerHTML);
       } else toast.error("Failed to generate features");
     } catch (err) {
-      toast.error(err.message || "Error generating features");
+      toast.error(err.response?.data?.message || "Error generating features");
     } finally {
       setIsGeneratingFeatures(false);
     }
   };
 
-  // Generate Key Considerations
+  // ✅ Generate Key Considerations
   const generateKeyConsiderations = async () => {
     if (!title) return toast.error("Enter title first");
     setIsGeneratingKeys(true);
     try {
-      const { data } = await axios.post("/api/project/generate-content", {
+      const { data } = await axios.post("/api/project/generate", {
         type: "keyConsiderations",
         title,
         category,
@@ -190,11 +189,15 @@ const AddProject = () => {
         const htmlKeys = `<ul>${data.generated.keyConsiderations
           .map((k) => `<li>${k}</li>`)
           .join("")}</ul>`;
-        keyQuill.current.setContents(keyQuill.current.clipboard.convert(htmlKeys));
+        keyQuill.current.setContents(
+          keyQuill.current.clipboard.convert(htmlKeys)
+        );
         setKeyConsiderations(keyQuill.current.root.innerHTML);
       } else toast.error("Failed to generate key considerations");
     } catch (err) {
-      toast.error(err.message || "Error generating key considerations");
+      toast.error(
+        err.response?.data?.message || "Error generating key considerations"
+      );
     } finally {
       setIsGeneratingKeys(false);
     }
@@ -325,7 +328,7 @@ const AddProject = () => {
             type="button"
             onClick={generateKeyConsiderations}
             disabled={isGeneratingKeys}
-            className="text-sm text-white bg-black/70 px-4 py-2 rounded hover:bg-black disabled:opacity-50"
+            className="text-sm text-white right-0 bottom-0 bg-black/70 px-4 py-2 rounded hover:bg-black disabled:opacity-50"
           >
             {isGeneratingKeys ? "Generating..." : "Generate Key Considerations"}
           </button>

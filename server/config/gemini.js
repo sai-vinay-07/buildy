@@ -1,42 +1,25 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const dotenv = require("dotenv");
+require("dotenv").config();
 
-dotenv.config();
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = "gemini-2.5-flash";
 
-const ai = new GoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
-
-async function main({ title, features, description }) {
-  try {
-    // Build prompt based on caller input
-    const prompt = `Given the project title "${title}", description "${description}", and features "${features}", generate the following:
-- Key Considerations (array of strings)
-Return the result as JSON: {keyConsiderations}`;
-
-    // Use Gemini API as per documentation (contents is always an array)
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
-      contents: [{ role: "user", parts: [{ text: prompt }] }]
-    });
-
-    // Parse AI response (handles code block, JSON, or plain text)
-    let resultText = response.candidates?.[0]?.content?.parts?.[0]?.text || response.text || '';
-    console.log("Gemini raw response:", resultText);
-
-    // Wrap parsing in try/catch to prevent crashes
+async function runGemini(prompt) {
+  const MAX_RETRIES = 3;
+  let delay = 1000;
+  for (let i = 0; i < MAX_RETRIES; i++) {
     try {
-      // Remove code fencing (if AI responds as ````````)
-      resultText = resultText.replace(/``````/g, '').trim();
-      const parsed = JSON.parse(resultText);
-      return { keyConsiderations: parsed.keyConsiderations || [] };
-    } catch (parseError) {
-      console.error("Failed to parse Gemini response as JSON:", parseError);
-      // Fallback: return empty array
-      return { keyConsiderations: [] };
+      const response = await genAI.getGenerativeModel({ model }).generateContent(prompt);
+      return response.text();
+    } catch (error) {
+      if (i < MAX_RETRIES - 1) {
+        await new Promise((r) => setTimeout(r, delay));
+        delay *= 2;
+      } else {
+        throw new Error("Gemini API call failed.");
+      }
     }
-  } catch (error) {
-    console.error("Error in Gemini API call:", error);
-    throw new Error("AI service unavailable. Please try again later.");
   }
 }
 
-module.exports = main;
+module.exports = { runGemini };
