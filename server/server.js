@@ -25,6 +25,10 @@ app.use(express.json())
 app.use('/api/admin', adminRouter);
 app.use('/api/project',projectRouter);
 
+app.get('/',()=>{
+    console.log('This is the Base Router')
+})
+
 app.listen(process.env.PORT,()=>{
     console.log(`Server is running at port ${process.env.PORT}`)
 })
