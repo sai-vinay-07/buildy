@@ -31,8 +31,8 @@ app.get('/',(req, res)=>{
     res.send('This is the Base Router');
 })
 
-// app.listen(process.env.PORT,()=>{
-//     console.log(`Server is running at port ${process.env.PORT}`)
-// })
+app.listen(process.env.PORT || 5000,()=>{
+    console.log(`Server is running at port ${process.env.PORT}`)
+})
 
 module.exports = app;
