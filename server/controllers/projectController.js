@@ -37,9 +37,8 @@ const addProject = async (req, res) => {
 
     // Upload project image
     const imageFile = req.files.image[0];
-    const imageBuffer = fs.readFileSync(imageFile.path);
     const imageUpload = await imagekit.upload({
-      file: imageBuffer,
+      file: imageFile.buffer,
       fileName: imageFile.originalname,
       folder: '/projects/images',
     });
@@ -47,13 +46,11 @@ const addProject = async (req, res) => {
       path: imageUpload.filePath,
       transformation: [{ quality: 'auto' }, { format: 'webp' }, { width: '1280' }],
     });
-    fs.unlinkSync(imageFile.path);
 
     // Upload wireframe
     const wireframeFile = req.files.wireframe[0];
-    const wireframeBuffer = fs.readFileSync(wireframeFile.path);
     const wireframeUpload = await imagekit.upload({
-      file: wireframeBuffer,
+      file: wireframeFile.buffer,
       fileName: wireframeFile.originalname,
       folder: '/projects/wireframes',
     });
@@ -61,7 +58,6 @@ const addProject = async (req, res) => {
       path: wireframeUpload.filePath,
       transformation: [{ quality: 'auto' }, { format: 'webp' }, { width: '1280' }],
     });
-    fs.unlinkSync(wireframeFile.path);
 
     const newProject = new Project({
       title,
