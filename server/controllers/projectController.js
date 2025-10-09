@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const Project = require('../models/project.js');
+const Project = require("../models/Project");
 const { imagekit } = require('../config/imageKit');
 const main = require('../config/geminiai');
 
