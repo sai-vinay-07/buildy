@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 import axios from "axios";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
+axios.defaults.timeout = 30000; // 30-second timeout
 
 const AppContext = createContext();
 
@@ -13,7 +14,6 @@ const AppProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [projects, setProjects] = useState([]);
   const [input, setInput] = useState("");
-
   const fetchProjects = async () => {
     try {
       const { data } = await axios.get("/api/project/all");

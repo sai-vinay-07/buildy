@@ -8,12 +8,17 @@ const {
   getProjectById,
   deleteProjectById,
   togglePublish,
-  generateProjectContent,
+  generateContent,
 } = require('../controllers/projectController');
 
 const router = express.Router();
 
-// Secure admin operations
+
+// GET static routes
+router.get('/all', getAllProjects);
+router.get('/all/admin', auth, getAllProjectsForAdmin);
+
+// POST static routes
 router.post(
   '/add',
   auth,
@@ -24,11 +29,10 @@ router.post(
   addProject
 );
 
-router.post('/generate', auth, generateProjectContent);
-router.get('/all', getAllProjects);
-router.get('/all/admin', auth, getAllProjectsForAdmin);
-router.get('/:projectId', getProjectById);
 router.post('/delete', auth, deleteProjectById);
 router.post('/togglePublish', auth, togglePublish);
+router.get('/:projectId', getProjectById);
+router.post('/generate' , auth , generateContent );
+
 
 module.exports = router;

@@ -9,6 +9,8 @@ const { addProject } = require('./controllers/projectController')
 dotenv.config()
 const app = express()
 
+
+
 mongoose.connect(process.env.MONGODB_URI)
 .then(()=>{
     console.log('MONGODB CONNECTED SUCCESSFULLY')

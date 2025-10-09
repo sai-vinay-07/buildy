@@ -4,8 +4,11 @@ import { DiGithubBadge } from 'react-icons/di'
 import { FaYoutube } from 'react-icons/fa'
 
 const ProjectCard = ({ project }) => {
-  const { _id, title, features, category, image, repoLink, videoLink, difficulty } = project
+  const { _id, title, description, features, category, image, repoLink, videoLink, difficulty } = project
   const navigate = useNavigate()
+
+  // Remove any HTML tags from description
+  const cleanDescription = description.replace(/<\/?[^>]+(>|$)/g, "")
 
   return (
     <div 
@@ -29,41 +32,15 @@ const ProjectCard = ({ project }) => {
         </span>
       </div>
 
-      {/* Title + Features */}
+      {/* Title + Clean Description */}
       <div className="px-4 pb-5">
         <h5 className="mb-2 font-semibold text-lg text-gray-900 line-clamp-1">
           {title}
         </h5>
         <p className="text-sm text-gray-600 line-clamp-2">
-          {features}
+          {cleanDescription}
         </p>
       </div>
-
-      {/* Links (Optional) */}
-      {/* <div className="flex gap-4 px-4 pb-4">
-        {repoLink && (
-          <a 
-            href={repoLink} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-gray-600 hover:text-gray-900 text-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <DiGithubBadge />
-          </a>
-        )}
-        {videoLink && (
-          <a 
-            href={videoLink} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-red-500 hover:text-red-700 text-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <FaYoutube />
-          </a>
-        )}
-      </div> */}
     </div>
   )
 }

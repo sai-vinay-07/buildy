@@ -20,7 +20,7 @@ const Layout = () => {
       <div className='flex items-center justify-between px-4 py-6 h-[80px] sm:px-12 border-b border-gray-200'>
         <img
           src={assets.buildy_logo}
-          className='w-15 h-12 sm:w-40 cursor-pointer'
+          className='h-10 w-32 cursor-pointer object-contain'
           onClick={() => navigate('/')}
           alt="Logo"
         />

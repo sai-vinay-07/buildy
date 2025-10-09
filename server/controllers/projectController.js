@@ -2,7 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const Project = require('../models/project');
 const { imagekit } = require('../config/imageKit');
-const { runGemini } = require('../config/gemini');
+const main = require('../config/geminiai');
+
 
 const addProject = async (req, res) => {
   try {
@@ -142,34 +143,16 @@ const togglePublish = async (req, res) => {
   }
 };
 
-const generateProjectContent = async (req, res) => {
+const generateContent = async (req,res)=>{
   try {
-    const { type, title, category } = req.body;
-    if (!type || !title || !category)
-      return res.status(400).json({ success: false, message: 'Missing required fields' });
-
-    let prompt = '';
-    let generatedContent = {};
-
-    if (type === 'description') {
-      prompt = `Generate a project description for a ${category} project titled "${title}".`;
-      const description = await runGemini(prompt);
-      generatedContent = { description };
-    } else if (type === 'features') {
-      prompt = `Generate a JSON array of 5-7 key features for a ${category} project titled "${title}".`;
-      const response = await runGemini(prompt);
-      generatedContent = { features: JSON.parse(response.trim()) };
-    } else if (type === 'keyConsiderations') {
-      prompt = `Generate a JSON array of 5-7 key considerations for a ${category} project titled "${title}".`;
-      const response = await runGemini(prompt);
-      generatedContent = { keyConsiderations: JSON.parse(response.trim()) };
-    }
-
-    res.json({ success: true, generated: generatedContent });
+    const {prompt} = req.body;
+   const content =  await main(prompt + "Generate a short, simple project description based on the title and category . Keep it concise and easy to understand")
+   res.status(200).json({ success : true , content})
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+     res.status(500).json({ success : false , message : error.message})
   }
-};
+}
+
 
 module.exports = {
   addProject,
@@ -178,5 +161,5 @@ module.exports = {
   getProjectById,
   deleteProjectById,
   togglePublish,
-  generateProjectContent,
+  generateContent
 };
