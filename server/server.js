@@ -4,7 +4,7 @@ const mongoose = require("mongoose")
 const dotenv = require('dotenv')
 const adminRouter = require('./router/adminRoutes')
 const projectRouter = require('./router/projectRoutes')
-const { addProject } = require('./controllers/projectController')
+// const { addProject } = require('./controllers/projectController')
 
 dotenv.config()
 const app = express()
@@ -31,6 +31,8 @@ app.get('/',(req, res)=>{
     res.send('This is the Base Router');
 })
 
-app.listen(process.env.PORT,()=>{
-    console.log(`Server is running at port ${process.env.PORT}`)
-})
+// app.listen(process.env.PORT,()=>{
+//     console.log(`Server is running at port ${process.env.PORT}`)
+// })
+
+module.exports = app;
