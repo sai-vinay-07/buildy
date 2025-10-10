@@ -72,16 +72,10 @@ const Project = () => {
               <h3 className="text-2xl font-semibold mt-8 mb-4 text-gray-900">
                 Features
               </h3>
-              <ul className="list-disc list-inside space-y-2 text-gray-700 mb-10">
-                {data.features
-                  .split(/\r?\n|\. /) // Split by newlines or period+space
-                  .filter((item) => item.trim() !== "")
-                  .map((feature, index) => (
-                    <li key={index} className="leading-relaxed">
-                      {feature.trim().replace(/^[-•✔️]?\s*/, "")}
-                    </li>
-                  ))}
-              </ul>
+              <div
+                className="prose prose-blue max-w-none mb-10"
+                dangerouslySetInnerHTML={{ __html: data.features }}
+              />
             </>
           )}
 
@@ -91,16 +85,10 @@ const Project = () => {
               <h3 className="text-2xl font-semibold mb-4 text-gray-900">
                 Key Considerations
               </h3>
-              <ul className="list-disc list-inside space-y-2 text-gray-700 mb-10">
-                {data.keyConsiderations
-                  .split(/\r?\n|\. /)
-                  .filter((item) => item.trim() !== "")
-                  .map((point, index) => (
-                    <li key={index} className="leading-relaxed">
-                      {point.trim().replace(/^[-•✔️]?\s*/, "")}
-                    </li>
-                  ))}
-              </ul>
+              <div
+                className="prose prose-indigo max-w-none mb-10"
+                dangerouslySetInnerHTML={{ __html: data.keyConsiderations }}
+              />
             </>
           )}
         </div>
@@ -189,9 +177,7 @@ const Project = () => {
             {/* Wireframes */}
             {data.wireframe && (
               <div>
-                <h6 className="text-sm font-medium text-gray-500">
-                  Wireframes
-                </h6>
+                <h6 className="text-sm font-medium text-gray-500">Wireframes</h6>
                 <a
                   href={data.wireframe}
                   download
